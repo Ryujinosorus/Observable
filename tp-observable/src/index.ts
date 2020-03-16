@@ -44,9 +44,10 @@ function exos(): void {
 
 
     //Personne
-    let personne = document.getElementById('Personne');
-    let searchZone = tpObservable.exo4("a", "b", "c");
-    tpObservable.addElementToBloc(searchZone, personne);
+    let bloc = tpObservable.exo4('exo6', 'search', 'results') as HTMLDivElement;
+    tpObservable.addElementToBloc(bloc, solution);
+
+    tpObservable.recherche(document.getElementById('search'), document.getElementById('results'))
 
 }
 

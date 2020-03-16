@@ -1,7 +1,8 @@
 import {applyMixins, observable} from "rxjs/internal-compatibility";
-import {from, interval, Observable, Observer} from "rxjs";
+import { from, fromEvent, interval, Observable, Observer } from "rxjs";
 import { range } from 'rxjs';
-import {count, filter, map, reduce, take} from "rxjs/operators";
+import { count, debounceTime, filter, map, pluck, reduce, take, tap } from "rxjs/operators";
+
 import {Personne} from "./Personne";
 import {myPersons} from "./Datas";
 
@@ -157,10 +158,66 @@ export class TPObservable implements Enonce {
     ListePersonnes: Personne[] = myPersons.map(personne => new Personne(personne));
 
     exo4(id: string, idSearch: string, idResult: string): HTMLElement {
-        let zoneP = this.creerHTMLElement('div', 'exo4');
-        zoneP.id = "exo4";
-        return zoneP;
+        let ul = this.creerHTMLElement('ul', ' ');
+        ul.setAttribute('id', idResult);
+        let search = this.creerHTMLElement('input', '');
+        search.setAttribute('id', idSearch);
+        search.setAttribute('type', 'text');
+        let div = this.creerDivWithId('exo4');
+        this.addElementToBloc(this.creerHTMLElement('br', ''), div);
+        this.addElementToBloc(ul, div);
+        this.addElementToBloc(search, div);
+        return div as HTMLElement;
     }
+
+    clearResults(container: HTMLElement): void {
+        while (container.childElementCount > 0) {
+            container.removeChild(container.firstChild);
+        }
+    }
+
+    appendResults(result: Personne, container: HTMLElement): void {
+        let li = document.createElement('li');
+        let text = document.createTextNode(result.prenom + " " + result.nom);
+        li.appendChild(text);
+        container.appendChild(li);
+    }
+
+    listePersonnes: Personne[] = myPersons.map(personne => new Personne(personne));
+
+
+    recherche(searchBox: HTMLElement, results: HTMLElement) {
+        const notEmpty = (input: any) => !!input && input.trim().length > 0;
+        const sendRequest = (arr: Personne[], query: string) => {
+            return arr.filter(item => {
+                return query.length > 0 && item.nom.startsWith(query);
+            });
+        };
+        const search$ = fromEvent(searchBox, 'keyup').pipe(
+            debounceTime(1000),
+            pluck('target', 'value'),
+            tap(query => this.clearResults(results)),
+            filter(notEmpty),
+            tap(query => console.log(`Querying for ${query}...`)),
+            map(query => sendRequest(this.listePersonnes, query)))
+            .subscribe(result => {
+                if (result.length === 0) {
+                    this.clearResults(results);
+                } else {
+                    this.clearResults(results);
+                    result.forEach(r => {
+                        this.appendResults(r, results);
+                        console.log(r.toString());
+                    });
+                }
+                (error: any) => {
+                    console.log(error);
+                }
+            });
+    }
+
+
+
 }
 
 export default TPObservable;
